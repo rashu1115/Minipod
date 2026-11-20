@@ -1,6 +1,12 @@
 package main
 
-var containerdSocket = "/run/containerd/containerd.sock"
+import (
+	"os"
+
+	"go.yaml.in/yaml/v3"
+)
+
+// var containerdSocket = "/run/containerd/containerd.sock"
 
 type namespaceList []string
 
@@ -16,11 +22,29 @@ type Pod struct {
 }
 
 func main() {
-	var p Pod
-	output := readYAMLManifest()
-	p.createContainer(output)
+	args := os.Args
+	filePath := args[1]
+	output := readYAMLManifest(filePath)
+	createContainer(output)
 }
 
-func readYAMLManifest() string { return "" }
+func readYAMLManifest(manifest string) *config {
+	var cfg *config
+	data, err := os.ReadFile(manifest)
+	if err != nil {
+		panic(err)
+	}
 
-func (p *Pod) createContainer(input string) *container { return &container{} }
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		panic(err)
+	}
+
+	return cfg
+}
+
+func createContainer(input *config) *container {
+	cnt := &container{}
+	spec := input.spec
+	cnt.name = spec[0].name
+	return cnt
+}
