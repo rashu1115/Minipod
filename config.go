@@ -1,12 +1,13 @@
 package main
 
+// get container spec from the manifest
 type containerSpec struct {
-	name     string   `yaml:"name"`
-	image    string   `yaml:"image"`
-	commands []string `yaml:"commands"`
-	ports    []int    `yaml:"ports"`
+	Name     string   `yaml:"name"`
+	Image    string   `yaml:"image"`
+	Commands []string `yaml:"commands"`
+	Ports    []int    `yaml:"ports"`
 }
 
 type config struct {
-	spec []*containerSpec `yaml:"containerSpec"`
+	Spec []*containerSpec `yaml:"containerSpec"`
 }

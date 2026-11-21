@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"go.yaml.in/yaml/v3"
@@ -10,6 +11,8 @@ import (
 
 type namespaceList []string
 
+// container native info to pass
+// on to containerd
 type container struct {
 	name      string
 	image     string
@@ -25,11 +28,12 @@ func main() {
 	args := os.Args
 	filePath := args[1]
 	output := readYAMLManifest(filePath)
-	createContainer(output)
+	cnt := createContainer(output)
+	fmt.Println(cnt)
 }
 
 func readYAMLManifest(manifest string) *config {
-	var cfg *config
+	var cfg config
 	data, err := os.ReadFile(manifest)
 	if err != nil {
 		panic(err)
@@ -39,12 +43,18 @@ func readYAMLManifest(manifest string) *config {
 		panic(err)
 	}
 
-	return cfg
+	return &cfg
 }
 
 func createContainer(input *config) *container {
 	cnt := &container{}
-	spec := input.spec
-	cnt.name = spec[0].name
+	spec := input.Spec
+	if len(spec) == 0 {
+		os.Exit(1)
+	}
+	for i := range spec {
+		cnt.name = spec[i].Name
+		cnt.image = spec[i].Image
+	}
 	return cnt
 }
