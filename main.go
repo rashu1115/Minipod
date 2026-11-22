@@ -1,13 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
+	namespace "github.com/containerd/containerd/namespaces"
+	containerd "github.com/containerd/containerd/v2/client"
+	"github.com/containerd/containerd/v2/pkg/oci"
 	"go.yaml.in/yaml/v3"
 )
 
-// var containerdSocket = "/run/containerd/containerd.sock"
+var containerdSocket = "/run/containerd/containerd.sock"
 
 type namespaceList []string
 
@@ -21,6 +25,7 @@ type container struct {
 }
 
 type Pod struct {
+	name           string
 	containersList []*container
 }
 
@@ -28,8 +33,7 @@ func main() {
 	args := os.Args
 	filePath := args[1]
 	output := readYAMLManifest(filePath)
-	cnt := createContainer(output)
-	fmt.Println(cnt)
+	createContainer(output)
 }
 
 func readYAMLManifest(manifest string) *config {
@@ -46,7 +50,7 @@ func readYAMLManifest(manifest string) *config {
 	return &cfg
 }
 
-func createContainer(input *config) *container {
+func createContainer(input *config) {
 	cnt := &container{}
 	spec := input.Spec
 	if len(spec) == 0 {
@@ -56,5 +60,28 @@ func createContainer(input *config) *container {
 		cnt.name = spec[i].Name
 		cnt.image = spec[i].Image
 	}
-	return cnt
+
+	fmt.Println("Creating container now...")
+	client, err := containerd.New(containerdSocket)
+
+	if err != nil {
+		panic(err)
+	}
+
+	ctx := namespace.WithNamespace(context.Background(), "minipod")
+	fmt.Printf("Pulling %s....", cnt.image)
+	image, err := client.Pull(ctx, fmt.Sprintf("docker.io/library/%s", cnt.image), containerd.WithPullUnpack)
+	if err != nil {
+		panic(err)
+	}
+	_, err = client.NewContainer(ctx, cnt.name,
+		containerd.WithNewSnapshot(fmt.Sprintf("%s-snapshot", cnt.image), image),
+		containerd.WithNewSpec(oci.WithImageConfig(image)),
+	)
+	if err != nil {
+		panic(err)
+	}
+	defer client.Close()
+
+	fmt.Println("Container created")
 }
