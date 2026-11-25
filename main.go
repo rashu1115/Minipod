@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"os"
 
-	namespace "github.com/containerd/containerd/namespaces"
+	namespaces "github.com/containerd/containerd/namespaces"
 	containerd "github.com/containerd/containerd/v2/client"
 	"github.com/containerd/containerd/v2/pkg/oci"
 	"go.yaml.in/yaml/v3"
 )
 
-var containerdSocket = "/run/containerd/containerd.sock"
+var namespace string = "minipod.io"
+var containerdSocket string = "/run/containerd/containerd.sock"
 
 type namespaceList []string
 
@@ -68,7 +69,7 @@ func createContainer(input *config) {
 		panic(err)
 	}
 
-	ctx := namespace.WithNamespace(context.Background(), "minipod")
+	ctx := namespaces.WithNamespace(context.Background(), namespace)
 	fmt.Printf("Pulling %s....", cnt.image)
 	image, err := client.Pull(ctx, fmt.Sprintf("docker.io/library/%s", cnt.image), containerd.WithPullUnpack)
 	if err != nil {
@@ -78,6 +79,7 @@ func createContainer(input *config) {
 		containerd.WithNewSnapshot(fmt.Sprintf("%s-snapshot", cnt.image), image),
 		containerd.WithNewSpec(oci.WithImageConfig(image)),
 	)
+
 	if err != nil {
 		panic(err)
 	}
