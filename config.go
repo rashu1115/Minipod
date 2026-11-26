@@ -12,6 +12,7 @@ type containerSpec struct {
 	Ports    []*ports `yaml:"ports"`
 }
 
-type config struct {
-	Spec []*containerSpec `yaml:"containerSpec"`
+type podSpec struct {
+	Name          string           `yaml:"name"`
+	ContainerSpec []*containerSpec `yaml:"containerSpec"`
 }

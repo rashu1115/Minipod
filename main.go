@@ -25,7 +25,7 @@ type container struct {
 	namespace []*namespaceList
 }
 
-type Pod struct {
+type pod struct {
 	name           string
 	containersList []*container
 }
@@ -37,23 +37,23 @@ func main() {
 	createContainer(output)
 }
 
-func readYAMLManifest(manifest string) *config {
-	var cfg config
+func readYAMLManifest(manifest string) *podSpec {
+	var pd podSpec
 	data, err := os.ReadFile(manifest)
 	if err != nil {
 		panic(err)
 	}
 
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
+	if err := yaml.Unmarshal(data, &pd); err != nil {
 		panic(err)
 	}
 
-	return &cfg
+	return &pd
 }
 
-func createContainer(input *config) {
+func createContainer(input *podSpec) {
 	cnt := &container{}
-	spec := input.Spec
+	spec := input.ContainerSpec
 	if len(spec) == 0 {
 		os.Exit(1)
 	}

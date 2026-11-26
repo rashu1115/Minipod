@@ -1,6 +1,15 @@
-containerSpec:
-  - name: "name of the container"
+pod:
+  name: "pod-name"
+  containerSpec:
+  - name: "name of the container 1"
     image:  "oci image"
+    commands:
+      - "cmd1"
+      - "cmd2"
+    ports:
+      - containerPorts: 1
+  - name: "name of the container 2"
+    image: "oci image"
     commands:
       - "cmd1"
       - "cmd2"
