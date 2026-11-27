@@ -14,21 +14,19 @@ import (
 var namespace string = "minipod.io"
 var containerdSocket string = "/run/containerd/containerd.sock"
 
-type namespaceList []string
-
 type (
 	upStatus   int
 	downStatus int
 )
 
-// container native info to pass
-// on to containerd
 type ports struct {
 	ContainerPorts int `yaml:"containerPorts"`
 }
 
 // get container spec from the manifest
 type containerSpec struct {
+	up       upStatus
+	down     downStatus
 	Name     string   `yaml:"name"`
 	Image    string   `yaml:"image"`
 	Commands []string `yaml:"commands"`
