@@ -41,34 +41,43 @@ type podSpec struct {
 func main() {
 	args := os.Args
 	filePath := args[1]
-	output := readYAMLManifest(filePath)
-	createContainer(output)
+
+	output, err := readYAMLManifest(filePath)
+	if err != 0 {
+		os.Exit(err)
+	}
+	output.createContainer()
 
 	if os.Args[1] == "list" {
 		fmt.Fprint(os.Stdout, "Name\tRunning")
-		listPods()
+		// listPods()
 	}
 }
 
-func listPods() {}
+// func listPods() int {
+// 	contregistered := len(podList)
+// 	return contregistered
+// }
 
-func readYAMLManifest(manifest string) *podSpec {
+func readYAMLManifest(manifest string) (*podSpec, int) {
 	var pd podSpec
 	data, err := os.ReadFile(manifest)
 	if err != nil {
-		panic(err)
+		fmt.Fprintln(os.Stderr, err)
+		return nil, 1
 	}
 
 	if err := yaml.Unmarshal(data, &pd); err != nil {
-		panic(err)
+		fmt.Fprintln(os.Stderr, err)
+		return nil, 1
 	}
 
-	return &pd
+	return &pd, 0
 }
 
-func createContainer(input *podSpec) {
+func (pd *podSpec) createContainer() {
 	cnt := &containerSpec{}
-	spec := input.ContainerSpec
+	spec := pd.ContainerSpec
 	if len(spec) == 0 {
 		os.Exit(1)
 	}
