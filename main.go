@@ -16,18 +16,28 @@ var containerdSocket string = "/run/containerd/containerd.sock"
 
 type namespaceList []string
 
+type (
+	upStatus   int
+	downStatus int
+)
+
 // container native info to pass
 // on to containerd
-type container struct {
-	name      string
-	image     string
-	rootFile  []byte
-	namespace []*namespaceList
+type ports struct {
+	ContainerPorts int `yaml:"containerPorts"`
 }
 
-type pod struct {
-	name           string
-	containersList []*container
+// get container spec from the manifest
+type containerSpec struct {
+	Name     string   `yaml:"name"`
+	Image    string   `yaml:"image"`
+	Commands []string `yaml:"commands"`
+	Ports    []*ports `yaml:"ports"`
+}
+
+type podSpec struct {
+	Name          string           `yaml:"name"`
+	ContainerSpec []*containerSpec `yaml:"containerSpec"`
 }
 
 func main() {
@@ -35,7 +45,14 @@ func main() {
 	filePath := args[1]
 	output := readYAMLManifest(filePath)
 	createContainer(output)
+
+	if os.Args[1] == "list" {
+		fmt.Fprint(os.Stdout, "Name\tRunning")
+		listPods()
+	}
 }
+
+func listPods() {}
 
 func readYAMLManifest(manifest string) *podSpec {
 	var pd podSpec
@@ -52,14 +69,14 @@ func readYAMLManifest(manifest string) *podSpec {
 }
 
 func createContainer(input *podSpec) {
-	cnt := &container{}
+	cnt := &containerSpec{}
 	spec := input.ContainerSpec
 	if len(spec) == 0 {
 		os.Exit(1)
 	}
 	for i := range spec {
-		cnt.name = spec[i].Name
-		cnt.image = spec[i].Image
+		cnt.Name = spec[i].Name
+		cnt.Image = spec[i].Image
 	}
 
 	fmt.Println("Creating container now...")
@@ -70,13 +87,13 @@ func createContainer(input *podSpec) {
 	}
 
 	ctx := namespaces.WithNamespace(context.Background(), namespace)
-	fmt.Printf("Pulling %s....", cnt.image)
-	image, err := client.Pull(ctx, fmt.Sprintf("docker.io/library/%s", cnt.image), containerd.WithPullUnpack)
+	fmt.Printf("Pulling %s....", cnt.Image)
+	image, err := client.Pull(ctx, fmt.Sprintf("docker.io/library/%s", cnt.Image), containerd.WithPullUnpack)
 	if err != nil {
 		panic(err)
 	}
-	_, err = client.NewContainer(ctx, cnt.name,
-		containerd.WithNewSnapshot(fmt.Sprintf("%s-snapshot", cnt.image), image),
+	_, err = client.NewContainer(ctx, cnt.Name,
+		containerd.WithNewSnapshot(fmt.Sprintf("%s-snapshot", cnt.Image), image),
 		containerd.WithNewSpec(oci.WithImageConfig(image)),
 	)
 
