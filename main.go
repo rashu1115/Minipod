@@ -46,6 +46,7 @@ func main() {
 	if err != 0 {
 		os.Exit(err)
 	}
+	output.runPauseContainer()
 	output.createContainer()
 
 	if os.Args[1] == "list" {
@@ -58,6 +59,10 @@ func main() {
 // 	contregistered := len(podList)
 // 	return contregistered
 // }
+
+func (pd *podSpec) runPauseContainer() {
+	pd.createContainer()
+}
 
 func readYAMLManifest(manifest string) (*podSpec, int) {
 	var pd podSpec
